@@ -1,0 +1,45 @@
+services:
+  db:
+    # Usamos MariaDB 10.6 (LTS). Es mucho más estable para SuiteCRM que la 11.x
+    image: mariadb:10.6
+    container_name: SuiteCRM-DB
+    hostname: suitecrm-db
+    environment:
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_USER=suitecrmuser
+      - MARIADB_DATABASE=suitecrm
+      - MARIADB_PASSWORD=suitecrmpass
+      - MARIADB_ROOT_PASSWORD=rootpass
+    volumes:
+      - db_data:/var/lib/mysql:rw
+    restart: unless-stopped
+
+  suitecrm:
+    # Usamos la repo 'legacy' que es la única gratuita que queda funcional
+    image: bitnamilegacy/suitecrm:8
+    container_name: SuiteCRM
+    ports:
+      - "8200:8080"
+      - "8443:8443"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=no
+      - SUITECRM_DATABASE_HOST=db
+      - SUITECRM_DATABASE_PORT_NUMBER=3306
+      - SUITECRM_DATABASE_USER=suitecrmuser
+      - SUITECRM_DATABASE_NAME=suitecrm
+      - SUITECRM_DATABASE_PASSWORD=suitecrmpass
+      - SUITECRM_USERNAME=admin
+      - SUITECRM_PASSWORD=password123
+      # Configuración crítica para que la API no falle por redirecciones
+      - SUITECRM_HOST=localhost
+      - SUITECRM_ENABLE_HTTPS=no
+      - SUITECRM_SKIP_BOOTSTRAP=no
+    volumes:
+      - suitecrm_data:/bitnami/suitecrm:rw
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  suitecrm_data:
