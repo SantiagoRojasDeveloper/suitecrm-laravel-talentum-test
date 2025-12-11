@@ -9,13 +9,13 @@
 
     @if(session('success')) 
         <div style="background: #d4edda; color: #155724; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-            ✅ {{ session('success') }}
+            {{ session('success') }}
         </div> 
     @endif
     
     @if(session('error')) 
         <div style="background: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-            ❌ {{ session('error') }}
+            {{ session('error') }}
         </div> 
     @endif
 

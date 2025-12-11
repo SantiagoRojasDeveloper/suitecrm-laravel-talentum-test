@@ -5,7 +5,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
-// --- LOGIN LOCAL (Sin cambios) ---
 Route::get('/login', function () {
     return view('login');
 })->name('login');
@@ -23,7 +22,6 @@ Route::post('/logout', function (Request $request) {
     return redirect('/login');
 })->name('logout');
 
-// --- APP CONECTADA A CRM ---
 Route::middleware('auth')->group(function () {
 
     Route::get('/', function () {
@@ -32,11 +30,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/enviar-crm', function (Request $request) {
 
-        $baseUrl = env('SUITECRM_URL'); // Debe ser: http://127.0.0.1:8200/legacy
+        $baseUrl = env('SUITECRM_URL'); 
 
-        // ---------------------------------------------------------
-        // 1. OBTENER TOKEN (CORREGIDO: JSON + Headers V8)
-        // ---------------------------------------------------------
         $responseToken = Http::withHeaders([
             'Accept' => 'application/vnd.api+json',
             'Content-Type' => 'application/vnd.api+json',
@@ -50,15 +45,10 @@ Route::middleware('auth')->group(function () {
         ]);
 
         if ($responseToken->failed()) {
-            // Debug: Si falla, mostramos exactamente qué respondió el servidor
             return back()->with('error', 'Error Auth: ' . $responseToken->status() . ' - ' . $responseToken->body());
         }
 
         $token = $responseToken->json()['access_token'];
-
-        // ---------------------------------------------------------
-        // 2. PREPARAR DATOS (Estructura JSON:API)
-        // ---------------------------------------------------------
         $crmData = [
             'data' => [
                 'type' => 'Contacts',
@@ -70,25 +60,18 @@ Route::middleware('auth')->group(function () {
                     'phone_mobile' => $request->phone_mobile,
                     'description' => $request->description ?? 'Sin descripción',
 
-                    // Campos Personalizados
                     'municipio_c' => $request->municipio,
                     'tiene_hijos_c' => $request->has('hijos'),
                 ]
             ]
         ];
 
-        // ---------------------------------------------------------
-        // 3. CREAR CONTACTO
-        // ---------------------------------------------------------
-        // Nota: SuiteCRM es estricto con la URL "/modules/Contacts"
         $responseApi = Http::withToken($token)
             ->withHeaders([
                 'Content-Type' => 'application/vnd.api+json',
                 'Accept' => 'application/vnd.api+json',
             ])
             ->post($baseUrl . '/Api/V8/module', $crmData);
-        // NOTA: Usé '/Api/V8/module' como me indicaste, 
-        // si falla prueba con '/Api/V8/modules/Contacts'
 
         if ($responseApi->successful()) {
             $nuevoId = $responseApi->json()['data']['id'] ?? 'ID Pendiente';
